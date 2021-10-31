@@ -5,7 +5,7 @@ import io from 'socket.io-client'
 export default class Board extends React.Component{
 
     timeout;
-    socket = io.connect("http://localhost:5000")
+    socket = io.connect('http://localhost:5000', { transports: ['websocket'] })
 
     constructor(props){
         super(props)
