@@ -6,25 +6,45 @@ export default class Board extends React.Component{
 
     timeout;
     socket = io.connect('http://localhost:5000', { transports: ['websocket'] })
+    ctx
+    isDrawing = false;
 
     constructor(props){
         super(props)
 
         this.socket.on("canvas-data", function(data){
+            var interval = setInterval(function(){
+            if(root.isDrawing) return;
+            root.isDrawing = true;
+            clearInterval(interval)
+            var root = this
             var image = new Image();
             var canvas = document.querySelector("#board");
             var ctx = canvas.getContext('2d')
             image.onload = function(){
                 ctx.drawImage(image,  0, 0)
+                root.isDrawing = false
             };
 
             image.src = data;
+            },200)
         })
+
+        // this.state = {
+        //     color: this.props.color,
+        //     size: this.props.size
+
+        // }
     }
 
     componentDidMount(){
         this.drawCanvas();
     }
+
+    // componentWillReceiveProps(newProps){
+    //     this.ctx.strokeStyle = newProps.color;
+    //     this.ctx.lineWidth = newProps.size;
+    // }
 
     drawCanvas(){
         var canvas = document.querySelector('#board');
@@ -49,10 +69,10 @@ export default class Board extends React.Component{
 
 
         /* Drawing on Paint App */
-        ctx.lineWidth = 5;
+        ctx.lineWidth = this.props.size;
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
-        ctx.strokeStyle = 'blue';
+        ctx.strokeStyle = this.props.color;
 
         canvas.addEventListener('mousedown', function(e) {
             canvas.addEventListener('mousemove', onPaint, false);
@@ -70,14 +90,15 @@ export default class Board extends React.Component{
             ctx.closePath();
             ctx.stroke();
 
-            if(root.timeout!=undefined) clearTimeout(root.timeout);
+            if(root.timeout!==undefined) clearTimeout(root.timeout);
             root.timeout = setTimeout(()=>{
                 var base64ImageData = canvas.toDataURL("image/png")
                 root.socket.emit("canvas-data", base64ImageData)
-            },1000)
+            },100)
         };
     }
 
+    
     render(){
         return(
             <div id="sketch">
